@@ -1,0 +1,79 @@
+replicaCount: 2
+
+image:
+  repository: your-registry/ecobottle-api
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 4000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: api.ecobottle.your-domain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: api-tls
+      hosts:
+        - api.ecobottle.your-domain.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+env:
+  NODE_ENV: production
+  PORT: "4000"
+  PROM_PORT: "9100"
+
+envFrom:
+  - secretRef:
+      name: ecobottle-secrets
+
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 4000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 4000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  path: /metrics
+  port: 9100

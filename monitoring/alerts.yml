@@ -1,0 +1,82 @@
+groups:
+  - name: eco_bottle_alerts
+    rules:
+      # Высокая нагрузка на API
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le)) > 1000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency detected"
+          description: "95th percentile latency is {{ $value }}ms"
+
+      # Высокий процент ошибок
+      - alert: HighErrorRate
+        expr: sum(rate(api_errors_total[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }}"
+
+      # Высокое использование памяти
+      - alert: HighMemoryUsage
+        expr: process_memory_usage_bytes{type="heapUsed"} / process_memory_usage_bytes{type="heapTotal"} > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Heap usage is {{ $value | humanizePercentage }}"
+
+      # Много активных подключений
+      - alert: HighActiveConnections
+        expr: http_active_connections > 100
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of active connections"
+          description: "{{ $value }} active connections"
+
+      # Низкий hit rate кеша
+      - alert: LowCacheHitRate
+        expr: sum(rate(cache_hits_total[5m])) / (sum(rate(cache_hits_total[5m])) + sum(rate(cache_misses_total[5m]))) < 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}"
+
+      # API недоступен
+      - alert: APIDown
+        expr: up{job=~"eco-bottle-api-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API instance is down"
+          description: "{{ $labels.instance }} has been down for more than 1 minute"
+
+      # Высокое использование CPU
+      - alert: HighCPUUsage
+        expr: process_cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}%"
+
+      # Много ошибок базы данных
+      - alert: HighDatabaseErrors
+        expr: sum(rate(database_errors_total[5m])) > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High database error rate"
+          description: "{{ $value }} database errors per second"

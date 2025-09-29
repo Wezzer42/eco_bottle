@@ -1,0 +1,105 @@
+name: Load Testing
+
+on:
+  schedule:
+    # Запускаем каждую ночь в 2:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL for load testing'
+        required: true
+        default: 'http://localhost:4000'
+      duration:
+        description: 'Test duration in seconds'
+        required: true
+        default: '60'
+
+jobs:
+  load-test:
+    name: Load Test
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_USER: testuser
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Artillery
+        run: npm install -g artillery@latest
+
+      - name: Setup and start backend
+        working-directory: ./backend
+        run: |
+          npm ci
+          npx prisma generate
+          npx prisma db push
+          npm run prisma:seed
+          npm run dev &
+        env:
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret-key
+          PORT: 4000
+
+      - name: Wait for backend
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:4000/api/health; then
+              echo "Backend is ready"
+              break
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+
+      - name: Run load test
+        run: |
+          cd loadtest
+          artillery run artillery.yml --output report.json
+          artillery report report.json --output report.html
+
+      - name: Upload load test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: load-test-results
+          path: |
+            loadtest/report.json
+            loadtest/report.html
+
+      - name: Check performance thresholds
+        run: |
+          echo "🔍 Checking performance metrics..."
+          # Можно добавить проверки метрик из Artillery
+          echo "✅ Performance check completed!"

@@ -1,0 +1,62 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alerts.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Backend API metrics (instance 1)
+  - job_name: 'eco-bottle-api-1'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # Backend API metrics (instance 2)  
+  - job_name: 'eco-bottle-api-2'
+    static_configs:
+      - targets: ['host.docker.internal:9101']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # Node Exporter (системные метрики)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9102']
+    scrape_interval: 15s
+
+  # cAdvisor (метрики контейнеров)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # PostgreSQL (если используется postgres_exporter)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['host.docker.internal:9187']
+    scrape_interval: 30s
+
+  # Redis (если используется redis_exporter)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['host.docker.internal:9121']
+    scrape_interval: 30s
+
+  # NGINX (если используется nginx_exporter)
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['host.docker.internal:9113']
+    scrape_interval: 30s

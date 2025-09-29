@@ -1,0 +1,211 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Production builds
+/frontend/.next/
+/frontend/out/
+/frontend/build/
+/backend/dist/
+/backend/build/
+
+# Environment variables
+.env
+.env*.local
+.env.production
+.env.development
+.env.test
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.example
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Prisma
+/backend/prisma/migrations/
+/backend/prisma/dev.db
+/backend/prisma/dev.db-journal
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Redis dump
+dump.rdb
+
+# Kubernetes secrets (if any local ones)
+k8s-secrets.yaml
+secrets.yaml
+
+# Local Helm values
+values-local.yaml
+values-dev.yaml
+values-override.yaml
+
+# Monitoring data
+prometheus-data/
+grafana-data/
+alertmanager-data/
+
+# Certificates
+*.pem
+*.key
+*.cert
+*.crt
+
+# Local development
+.local/
+local/
+
+# Backup files
+*.backup
+*.bak
+
+# Archive files
+*.tar
+*.tar.gz
+*.zip
+*.rar
+
+# Package files
+*.deb
+*.rpm
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Visual Studio Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Vim
+*.swp
+*.swo
+*.swn
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# Load testing results
+loadtest-results/
+artillery-report.html
+
+# Monitoring exports
+metrics-export/
+logs-export/
+
+# Local scripts
+run-local.sh
+debug.sh
+test-local.sh
+
+# Generated documentation
+docs/build/
+docs/dist/

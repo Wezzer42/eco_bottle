@@ -1,0 +1,37 @@
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@eco-bottle.com'
+
+route:
+  group_by: ['alertname']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'web.hook'
+
+receivers:
+  - name: 'web.hook'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+
+  # Пример для Slack (закомментирован)
+  # - name: 'slack-notifications'
+  #   slack_configs:
+  #     - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+  #       channel: '#alerts'
+  #       title: 'EcoBottle Alert'
+  #       text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
+  # Пример для Telegram (закомментирован)  
+  # - name: 'telegram-notifications'
+  #   webhook_configs:
+  #     - url: 'https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage'
+  #       send_resolved: true
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']

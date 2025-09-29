@@ -1,0 +1,41 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+    - duration: 30
+      arrivalRate: 200
+    - duration: 30
+      arrivalRate: 400
+    - duration: 30
+      arrivalRate: 1000
+  defaults:
+    headers:
+      Content-Type: application/json
+scenarios:
+  - name: products list
+    flow:
+      - get:
+          url: "/api/products"
+  - name: login + CRUD
+    flow:
+      - post:
+          url: "/api/auth/signup"
+          json:
+            email: "user_{{ $randomNumber(1,100000) }}@test.com"
+            password: "secret12"
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "user_1@test.com"
+            password: "secret12"
+          capture:
+            - json: $.token
+              as: token
+      - post:
+          url: "/api/products"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            name: "EcoBottle Test"
+            price: 1999
+            imageUrl: "https://res.cloudinary.com/demo/image/upload/samples/ecommerce/leather-bag-gray.jpg"
+

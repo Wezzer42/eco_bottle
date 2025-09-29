@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  postgres-test:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: testdb
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d testdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-test:
+    image: redis:7
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://testuser:testpass@postgres-test:5432/testdb
+      REDIS_URL: redis://redis-test:6379
+      JWT_SECRET: test-secret-key
+      PORT: 4000
+    ports:
+      - "4001:4000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      backend-test:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_API_BASE: http://backend-test:4000
+    ports:
+      - "3001:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
