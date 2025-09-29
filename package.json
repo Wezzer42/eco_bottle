@@ -1,0 +1,19 @@
+{
+  "name": "eco-bottle",
+  "version": "1.0.0",
+  "description": "EcoBottle - Sustainable water bottles e-commerce platform",
+  "private": true,
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install", 
+    "build:backend": "cd backend && npm run vercel-build",
+    "build:frontend": "cd frontend && npm run build",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
