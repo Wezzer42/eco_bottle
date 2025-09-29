@@ -13,7 +13,7 @@ const addToWishlistSchema = z.object({
   productId: z.number().int().positive(),
 });
 
-// GET /api/wishlist/check/:productId - проверить находится ли товар в wishlist
+// GET /api/wishlist/check/:productId - check if product is in wishlist
 r.get("/check/:productId", requireAuth, async (req: AuthenticatedRequest, res, next) => {
   try {
     const userId = req.user?.id;
@@ -44,7 +44,7 @@ r.get("/check/:productId", requireAuth, async (req: AuthenticatedRequest, res, n
   }
 });
 
-// GET /api/wishlist - получить список желаний пользователя
+// GET /api/wishlist - get user's wishlist
 r.get("/", requireAuth, cacheMiddleware(60), async (req: AuthenticatedRequest, res, next) => {
   try {
     const userId = req.user?.id;
@@ -70,7 +70,7 @@ r.get("/", requireAuth, cacheMiddleware(60), async (req: AuthenticatedRequest, r
   }
 });
 
-// POST /api/wishlist - добавить товар в список желаний
+// POST /api/wishlist - add product to wishlist
 r.post("/", requireAuth, apiLimiter, async (req: AuthenticatedRequest, res, next) => {
   try {
     const userId = req.user?.id;
@@ -81,7 +81,7 @@ r.post("/", requireAuth, apiLimiter, async (req: AuthenticatedRequest, res, next
 
     const { productId } = addToWishlistSchema.parse(req.body);
 
-    // Проверяем, существует ли товар
+    // Ensure product exists
     const product = await prisma.product.findUnique({
       where: { id: productId }
     });
@@ -128,7 +128,7 @@ r.post("/", requireAuth, apiLimiter, async (req: AuthenticatedRequest, res, next
   }
 });
 
-// DELETE /api/wishlist/:productId - удалить товар из списка желаний
+// DELETE /api/wishlist/:productId - remove product from wishlist
 r.delete("/:productId", requireAuth, apiLimiter, async (req: AuthenticatedRequest, res, next) => {
   try {
     const userId = req.user?.id;

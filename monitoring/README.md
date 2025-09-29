@@ -1,103 +1,103 @@
 # EcoBottle Monitoring Stack
 
-Полноценный мониторинг приложения EcoBottle с использованием Prometheus, Grafana и AlertManager.
+Complete monitoring of the EcoBottle application with Prometheus, Grafana and AlertManager.
 
-## 🚀 Быстрый запуск
+## 🚀 Quick Start
 
 ```bash
-# Запуск полного стека мониторинга
-docker-compose -f docker-compose.monitoring.yml up -d
+# Start full monitoring stack
+docker compose -f docker-compose.monitoring.yml up -d
 
-# Проверка статуса
-docker-compose -f docker-compose.monitoring.yml ps
+# Check status
+docker compose -f docker-compose.monitoring.yml ps
 ```
 
 ## 📊 Компоненты
 
 ### Prometheus (http://localhost:9090)
-- Сбор метрик из всех сервисов
-- Хранение временных рядов
-- Оценка правил алертов
+- Scrapes metrics from all services
+- Stores time series
+- Evaluates alert rules
 
 ### Grafana (http://localhost:3001)
-- **Логин:** admin / admin123
-- Визуализация метрик
-- Dashboards для мониторинга
+- Login: admin / admin123
+- Metrics visualization
+- Monitoring dashboards
 
 ### AlertManager (http://localhost:9093)
-- Управление алертами
-- Маршрутизация уведомлений
-- Группировка и подавление
+- Alert management
+- Notification routing
+- Grouping and inhibition
 
 ### Node Exporter (http://localhost:9100)
-- Системные метрики хоста
-- CPU, память, диск, сеть
+- Host system metrics
+- CPU, memory, disk, network
 
 ### cAdvisor (http://localhost:8080)
-- Метрики Docker контейнеров
-- Ресурсы контейнеров
+- Docker container metrics
+- Container resources
 
 ## 📈 Метрики
 
-### HTTP Метрики
-- `http_request_duration_ms` - Время ответа API
-- `http_requests_total` - Количество запросов
-- `http_active_connections` - Активные подключения
+### HTTP Metrics
+- `http_request_duration_ms` - API response time
+- `http_requests_total` - Request count
+- `http_active_connections` - Active connections
 
-### Кеш Метрики
-- `cache_hits_total` / `cache_misses_total` - Hit/miss кеша
-- `cache_operation_duration_ms` - Время операций кеша
-- `cache_size_bytes` - Размер кеша
+### Cache Metrics
+- `cache_hits_total` / `cache_misses_total` - Cache hit/miss
+- `cache_operation_duration_ms` - Cache operation time
+- `cache_size_bytes` - Cache size
 
-### База Данных
-- `database_connections_active` - Активные подключения
-- `database_query_duration_ms` - Время запросов
-- `database_errors_total` - Ошибки БД
+### Database Metrics
+- `database_connections_active` - Active connections
+- `database_query_duration_ms` - Query time
+- `database_errors_total` - DB errors
 
-### Бизнес Метрики
-- `user_registrations_total` - Регистрации пользователей
-- `user_logins_total` - Авторизации
-- `product_views_total` - Просмотры товаров
-- `api_errors_total` - Ошибки API
+### Business Metrics
+- `user_registrations_total` - Registrations
+- `user_logins_total` - Logins
+- `product_views_total` - Product views
+- `api_errors_total` - API errors
 
-### Системные Метрики
-- `process_memory_usage_bytes` - Использование памяти
-- `process_cpu_usage_percent` - Загрузка CPU
+### System Metrics
+- `process_memory_usage_bytes` - Memory usage
+- `process_cpu_usage_percent` - CPU usage
 
-## 🚨 Алерты
+## 🚨 Alerts
 
-### Критические
-- **APIDown** - API недоступен
-- **HighErrorRate** - Высокий процент ошибок (>5%)
-- **HighDatabaseErrors** - Много ошибок БД
+### Critical
+- **APIDown** - API is down
+- **HighErrorRate** - Error rate > 5%
+- **HighDatabaseErrors** - Many DB errors
 
-### Предупреждения
-- **HighAPILatency** - Высокое время ответа (>1s)
-- **HighMemoryUsage** - Высокое использование памяти (>90%)
-- **HighCPUUsage** - Высокая загрузка CPU (>80%)
-- **LowCacheHitRate** - Низкий hit rate кеша (<80%)
-- **HighActiveConnections** - Много подключений (>100)
+### Warnings
+- **HighAPILatency** - High response time (>1s)
+- **HighMemoryUsage** - High memory usage (>90%)
+- **HighCPUUsage** - High CPU usage (>80%)
+- **LowCacheHitRate** - Low cache hit rate (<80%)
+- **HighActiveConnections** - Many connections (>100)
 
-## 🔧 Конфигурация
+## 🔧 Configuration
 
-### Добавление новых метрик
-1. Добавить метрику в `backend/src/services/metrics.ts`
-2. Зарегистрировать в `register`
-3. Использовать в коде приложения
+### Add new metrics
+1. Add metric in `backend/src/services/metrics.ts`
+2. Register it in `register`
+3. Use in application code
 
-### Настройка алертов
-1. Редактировать `monitoring/alerts.yml`
-2. Перезапустить Prometheus: `docker-compose restart prometheus`
+### Configure alerts
+1. Edit `monitoring/alerts.yml`
+2. Restart Prometheus: `docker compose restart prometheus`
 
-### Кастомные dashboards
-1. Создать .json файл в `monitoring/grafana/dashboards/`
-2. Grafana автоматически подхватит изменения
+### Custom dashboards
+1. Create a .json file in `monitoring/grafana/dashboards/`
+2. Grafana will auto-load changes
 
-## 📱 Интеграции
+## 📱 Integrations
 
 ### Slack
 ```yaml
-# В alertmanager.yml
+# In alertmanager.yml
 receivers:
   - name: 'slack'
     slack_configs:
@@ -107,7 +107,7 @@ receivers:
 
 ### Telegram
 ```yaml
-# В alertmanager.yml  
+# In alertmanager.yml  
 receivers:
   - name: 'telegram'
     webhook_configs:
@@ -116,8 +116,8 @@ receivers:
 
 ### Email
 ```yaml
-# В alertmanager.yml
-global:
+# In alertmanager.yml
+ global:
   smtp_smarthost: 'localhost:587'
   smtp_from: 'alerts@eco-bottle.com'
 
@@ -127,20 +127,20 @@ receivers:
       - to: 'admin@eco-bottle.com'
 ```
 
-## 🔍 Полезные PromQL запросы
+## 🔍 Useful PromQL queries
 
 ```promql
-# Топ endpoint'ов по времени ответа
+# Top endpoints by latency
 topk(5, histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (route, le)))
 
-# Процент ошибок по endpoint'ам
-sum(rate(api_errors_total[5m])) by (endpoint) / sum(rate(http_requests_total[5m])) by (route) * 100
+# Error rate by endpoint
+ sum(rate(api_errors_total[5m])) by (endpoint) / sum(rate(http_requests_total[5m])) by (route) * 100
 
-# Рост пользователей за день
+# Daily users
 increase(user_registrations_total[24h])
 
-# Самые популярные товары
-topk(10, sum(rate(product_views_total[1h])) by (product_id))
+# Most popular products
+ topk(10, sum(rate(product_views_total[1h])) by (product_id))
 ```
 
 ## 🛠 Устранение неполадок

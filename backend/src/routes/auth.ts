@@ -20,7 +20,7 @@ r.post("/signup", apiLimiter, async (req, res, next) => {
     const hash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({ data: { email, password: hash, name: name || null } });
     
-    // Метрика регистрации
+    // Registration metric
     userRegistrations.inc();
     
     res.json({ id: user.id, email: user.email });
@@ -45,7 +45,7 @@ r.post("/login", apiLimiter, async (req, res, next) => {
     }
     const token = jwt.sign({ sub: u.id, email: u.email }, process.env.JWT_SECRET!, { expiresIn: "1h" });
     
-    // Метрика успешного логина
+    // Successful login metric
     userLogins.inc({ method: 'credentials' });
     
     res.json({ 

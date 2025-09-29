@@ -1,48 +1,48 @@
 # 🚀 CI/CD Pipeline Status
 
-## ✅ Настроенные компоненты
+## ✅ Configured components
 
 ### 🔧 GitHub Actions Workflows
 
-| Workflow | Файл | Статус | Описание |
-|----------|------|--------|----------|
-| **Main CI/CD** | `.github/workflows/ci.yml` | ✅ | Основной pipeline: lint, test, build, deploy |
-| **Tests** | `.github/workflows/test.yml` | ✅ | Unit и Integration тесты |
-| **Load Testing** | `.github/workflows/load-test.yml` | ✅ | Нагрузочное тестирование |
-| **Security** | `.github/workflows/codeql.yml` | ✅ | CodeQL анализ безопасности |
+| Workflow | File | Status | Description |
+|----------|------|--------|-------------|
+| **Main CI/CD** | `.github/workflows/ci.yml` | ✅ | Main pipeline: lint, test, build, deploy |
+| **Tests** | `.github/workflows/test.yml` | ✅ | Unit and Integration tests |
+| **Load Testing** | `.github/workflows/load-test.yml` | ✅ | Load testing |
+| **Security** | `.github/workflows/codeql.yml` | ✅ | CodeQL security analysis |
 
 ### 📦 Docker Configuration
 
-| Компонент | Файл | Статус | Описание |
-|-----------|------|--------|----------|
+| Component | File | Status | Description |
+|-----------|------|--------|-------------|
 | **Backend** | `backend/Dockerfile` | ✅ | Multi-stage production build |
 | **Frontend** | `frontend/Dockerfile` | ✅ | Next.js standalone build |
-| **CI Environment** | `docker-compose.ci.yml` | ✅ | Окружение для тестирования |
+| **CI Environment** | `docker-compose.ci.yml` | ✅ | Test environment |
 
 ### 🔍 Code Quality
 
-| Инструмент | Конфигурация | Статус | Применение |
-|------------|-------------|--------|------------|
-| **TypeScript** | `tsconfig.json` | ✅ | Статическая типизация |
-| **ESLint** | `.eslintrc.json` | ✅ | Анализ кода JavaScript/TypeScript |
-| **Dependabot** | `.github/dependabot.yml` | ✅ | Автообновление зависимостей |
+| Tool | Config | Status | Purpose |
+|------|--------|--------|---------|
+| **TypeScript** | `tsconfig.json` | ✅ | Static typing |
+| **ESLint** | `.eslintrc.json` | ✅ | JS/TS linting |
+| **Dependabot** | `.github/dependabot.yml` | ✅ | Dependency updates |
 
 ### 🧪 Testing Strategy
 
-| Тип тестов | Инструменты | Статус | Описание |
-|------------|-------------|--------|----------|
-| **Unit Tests** | Jest (planned) | 🔄 | Юнит тесты компонентов |
-| **Integration** | Custom scripts | ✅ | API тестирование |
-| **E2E** | Curl-based | ✅ | End-to-end проверки |
-| **Load Testing** | Artillery | ✅ | Нагрузочное тестирование |
+| Test Type | Tools | Status | Description |
+|-----------|-------|--------|-------------|
+| **Unit Tests** | Jest (planned) | 🔄 | Component unit tests |
+| **Integration** | Custom scripts | ✅ | API testing |
+| **E2E** | Curl-based | ✅ | End-to-end checks |
+| **Load Testing** | Artillery | ✅ | Load testing |
 
 ### 🛡️ Security
 
-| Компонент | Инструмент | Статус | Описание |
-|-----------|------------|--------|----------|
-| **SAST** | CodeQL | ✅ | Статический анализ |
-| **Dependencies** | npm audit | ✅ | Аудит зависимостей |
-| **Containers** | Trivy | ✅ | Сканирование образов |
+| Component | Tool | Status | Description |
+|-----------|------|--------|-------------|
+| **SAST** | CodeQL | ✅ | Static analysis |
+| **Dependencies** | npm audit | ✅ | Dependency audit |
+| **Containers** | Trivy | ✅ | Image scanning |
 
 ## 🚀 Deployment Pipeline
 
@@ -53,8 +53,8 @@
 
 ### Stages
 1. **Lint & Type Check** → TypeScript + ESLint
-2. **Unit Tests** → Jest тесты (backend/frontend)  
-3. **Integration Tests** → API + Database тесты
+2. **Unit Tests** → Jest tests (backend/frontend)  
+3. **Integration Tests** → API + Database tests
 4. **Security Scan** → CodeQL + Dependencies + Trivy
 5. **Build Images** → Docker multi-arch builds
 6. **Deploy** → Production deployment
@@ -72,8 +72,8 @@ GITHUB_TOKEN=<auto-provided>
 
 ## 📊 Monitoring & Metrics
 
-| Метрика | Источник | Доступность |
-|---------|----------|-------------|
+| Metric | Source | Availability |
+|--------|--------|--------------|
 | **Build Time** | GitHub Actions | ✅ |
 | **Test Coverage** | Jest reports | 🔄 |
 | **Security Issues** | CodeQL | ✅ |
@@ -81,37 +81,36 @@ GITHUB_TOKEN=<auto-provided>
 
 ## 🔄 Automated Updates
 
-| Компонент | Периодичность | Конфигурация |
-|-----------|---------------|-------------|
-| **npm dependencies** | Еженедельно | Dependabot |
-| **GitHub Actions** | Ежемесячно | Dependabot |
-| **Security scans** | Ежедневно | CodeQL schedule |
-| **Load tests** | Еженедельно | Load test schedule |
+| Component | Frequency | Config |
+|-----------|-----------|--------|
+| **npm dependencies** | Weekly | Dependabot |
+| **GitHub Actions** | Monthly | Dependabot |
+| **Security scans** | Daily | CodeQL schedule |
+| **Load tests** | Weekly | Load test schedule |
 
 ## ⚡ Quick Commands
 
 ```bash
-# Локальная проверка как в CI
-npm run type-check    # TypeScript проверка
-npm run lint          # ESLint проверка
-npm test             # Тесты
+# Local check like in CInpm run type-check    # TypeScript check
+npm run lint          # ESLint check
+npm test              # Tests
 
-# Docker тестирование
-docker-compose -f docker-compose.ci.yml up --build
+# Docker test environment
+docker compose -f docker-compose.ci.yml up --build
 
-# Ручной запуск load тестов
+# Manual load tests
 cd loadtest && artillery run artillery.yml
 ```
 
 ## 🎯 Next Steps
 
-- [ ] Настроить production сервер для деплоя
-- [ ] Добавить полноценные Jest тесты
-- [ ] Настроить code coverage reporting
-- [ ] Добавить Slack/Discord уведомления
-- [ ] Настроить staging environment
+- [ ] Configure production server for deployment
+- [ ] Add proper Jest tests
+- [ ] Set up code coverage reporting
+- [ ] Add Slack/Discord notifications
+- [ ] Set up staging environment
 
-## 📈 Статистика
+## 📈 Stats
 
 - **Total Workflows**: 4
 - **Docker Images**: 2 (backend, frontend)
@@ -121,4 +120,4 @@ cd loadtest && artillery run artillery.yml
 
 ---
 
-**Status**: ✅ **CI/CD pipeline полностью настроен и готов к использованию!**
+**Status**: ✅ **CI/CD pipeline is fully configured and ready to use!**

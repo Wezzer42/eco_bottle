@@ -21,16 +21,16 @@ export async function deleteCached(pattern: string): Promise<void> {
   }
 }
 
-// Middleware для кеширования ответов
+// Response caching middleware
 export function cacheMiddleware(ttlSeconds = 60) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Кешируем только GET запросы
+    // Cache only GET requests
     if (req.method !== 'GET') {
       return next();
     }
 
     const cacheKey = `page:${req.originalUrl}`;
-    const keyPrefix = req.originalUrl.split('?')[0].replace(/\/\d+/g, '/:id'); // Нормализуем ключ для метрик
+    const keyPrefix = req.originalUrl.split('?')[0].replace(/\/\d+/g, '/:id'); // Normalize key for metrics
     
     try {
       const startTime = Date.now();
@@ -38,11 +38,11 @@ export function cacheMiddleware(ttlSeconds = 60) {
       const duration = Date.now() - startTime;
       
       if (cached) {
-        // Записываем метрики cache hit
+        // Record cache hit metrics
         cacheHits.inc({ cache_key_prefix: keyPrefix });
         cacheOperations.observe({ operation: 'get', status: 'hit' }, duration);
         
-        // Устанавливаем заголовки из кеша
+        // Set headers from cache
         Object.entries(cached.headers).forEach(([key, value]) => {
           res.set(key, value);
         });
@@ -50,14 +50,14 @@ export function cacheMiddleware(ttlSeconds = 60) {
         return res.json(cached.data);
       }
 
-      // Записываем метрики cache miss
+      // Record cache miss metrics
       cacheMisses.inc({ cache_key_prefix: keyPrefix });
       cacheOperations.observe({ operation: 'get', status: 'miss' }, duration);
 
-      // Перехватываем оригинальный res.json
+      // Intercept original res.json
       const originalJson = res.json.bind(res);
       res.json = (data: any) => {
-        // Сохраняем в кеш только успешные ответы
+        // Cache only successful responses
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const headers: Record<string, string> = {};
           Object.entries(res.getHeaders()).forEach(([key, value]) => {

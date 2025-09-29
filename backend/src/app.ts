@@ -13,17 +13,30 @@ import { httpMetricsMiddleware, registerMetrics } from "./services/metrics";
 
 const app = express();
 
-// Регистрируем сбор метрик
+// Register metrics collection
 registerMetrics();
 
 app.use(helmet());
-app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true
-}));
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.length === 0) return callback(null, true);
+      return allowedOrigins.includes(origin)
+        ? callback(null, true)
+        : callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true
+  })
+);
 app.use(express.json());
 
-// Добавляем middleware для метрик HTTP запросов
+// Add middleware to instrument HTTP metrics
 app.use(httpMetricsMiddleware());
 
 app.use(morgan("tiny"));

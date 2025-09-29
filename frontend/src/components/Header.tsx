@@ -13,7 +13,7 @@ export default function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { data: session, status } = useSession();
 
-  // Обработка хэша для открытия AuthModal
+  // Handle URL hash to open AuthModal
   useEffect(() => {
     function handleHashChange() {
       if (window.location.hash === '#auth') {
@@ -22,7 +22,7 @@ export default function Header() {
       }
     }
 
-    handleHashChange(); // Проверяем при загрузке
+    handleHashChange(); // Check on initial load
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);

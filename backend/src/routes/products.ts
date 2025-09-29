@@ -8,7 +8,7 @@ import { cacheMiddleware, deleteCached } from "../services/cache";
 const prisma = new PrismaClient();
 const r = Router();
 
-// Применяем кеширование к GET запросам (кеш на 30 секунд)
+// Apply caching to GET requests (30s TTL)
 r.get("/", apiLimiter, cacheMiddleware(30), async (_req, res, next) => {
   try {
     const products = await prisma.product.findMany({ orderBy: { id: "asc" } });
@@ -27,7 +27,7 @@ r.post("/", requireAuth, apiLimiter, async (req, res, next) => {
   try {
     const dto = ProductDto.parse(req.body);
     const p = await prisma.product.create({ data: dto });
-    // Очищаем кеш продуктов
+    // Invalidate product cache
     await deleteCached("page:/api/products*");
     res.status(201).json(p);
   } catch (e) { next(e); }
@@ -38,7 +38,7 @@ r.put("/:id", requireAuth, apiLimiter, async (req, res, next) => {
     const id = Number(req.params.id);
     const dto = ProductDto.partial().parse(req.body);
     const p = await prisma.product.update({ where: { id }, data: dto });
-    // Очищаем кеш продуктов
+    // Invalidate product cache
     await deleteCached("page:/api/products*");
     res.json(p);
   } catch (e) { next(e); }
@@ -48,7 +48,7 @@ r.delete("/:id", requireAuth, apiLimiter, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     await prisma.product.delete({ where: { id } });
-    // Очищаем кеш продуктов
+    // Invalidate product cache
     await deleteCached("page:/api/products*");
     res.status(204).end();
   } catch (e) { next(e); }

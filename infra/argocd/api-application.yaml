@@ -8,12 +8,17 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/your-username/eco_bottle.git
+    repoURL: https://github.com/Wezzer42/eco_bottle.git
     targetRevision: main
     path: infra/helm/api
     helm:
       valueFiles:
         - values.yaml
+      values: |
+        ingress:
+          className: "traefik"
+          annotations: {}
+          tls: []
   destination:
     server: https://kubernetes.default.svc
     namespace: ecobottle

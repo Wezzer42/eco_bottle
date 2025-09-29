@@ -6,12 +6,13 @@
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
     "build": "tsc",
+    "vercel-build": "prisma generate",
     "test": "echo \"✅ Backend tests would run here\" && exit 0",
     "lint": "echo \"✅ Backend linting would run here\" && exit 0",
     "type-check": "tsc --noEmit",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx src/prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

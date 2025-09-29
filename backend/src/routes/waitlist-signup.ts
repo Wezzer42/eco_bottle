@@ -8,7 +8,7 @@ import { cacheMiddleware, deleteCached } from "../services/cache";
 const prisma = new PrismaClient();
 const r = Router();
 
-// GET /api/waitlist - получить список (только для админов)
+// GET /api/waitlist - get waitlist (admin-only in real setups)
 r.get("/", requireAuth, cacheMiddleware(60), async (_req, res, next) => {
   try {
     const waitlist = await prisma.waitlist.findMany({ 
@@ -19,7 +19,7 @@ r.get("/", requireAuth, cacheMiddleware(60), async (_req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// POST /api/waitlist - добавить в waitlist
+// POST /api/waitlist - add email to waitlist
 r.post("/", apiLimiter, async (req, res, next) => {
   try {
     const { email } = z.object({ email: z.string().email("Invalid email format") }).parse(req.body);
@@ -29,7 +29,7 @@ r.post("/", apiLimiter, async (req, res, next) => {
       create: { email }
     });
     
-    // Очищаем кеш waitlist при добавлении нового email
+    // Invalidate waitlist cache after insert
     await deleteCached("page:/api/waitlist*");
     
     res.status(201).json({ id: v.id, email: v.email });

@@ -1,0 +1,93 @@
+{
+  "aggregate": {
+    "counters": {
+      "vusers.created_by_name.products list": 75,
+      "vusers.created": 75,
+      "http.requests": 75,
+      "plugins.metrics-by-endpoint./api/products.errors.ETIMEDOUT": 75,
+      "errors.ETIMEDOUT": 75,
+      "vusers.failed": 75
+    },
+    "rates": {
+      "http.request_rate": 5
+    },
+    "firstCounterAt": 1759171775602,
+    "lastCounterAt": 1759171801068,
+    "firstMetricAt": 1759171775602,
+    "lastMetricAt": 1759171801068,
+    "period": 1759171800000,
+    "summaries": {},
+    "histograms": {}
+  },
+  "intermediate": [
+    {
+      "counters": {
+        "vusers.created_by_name.products list": 25,
+        "vusers.created": 25,
+        "http.requests": 25
+      },
+      "rates": {
+        "http.request_rate": 5
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1759171775602,
+      "lastCounterAt": 1759171779808,
+      "firstMetricAt": 1759171775602,
+      "lastMetricAt": 1759171779808,
+      "period": "1759171770000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.products list": 50,
+        "vusers.created": 50,
+        "http.requests": 50,
+        "plugins.metrics-by-endpoint./api/products.errors.ETIMEDOUT": 25,
+        "errors.ETIMEDOUT": 25,
+        "vusers.failed": 25
+      },
+      "rates": {
+        "http.request_rate": 5
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1759171780600,
+      "lastCounterAt": 1759171789811,
+      "firstMetricAt": 1759171780600,
+      "lastMetricAt": 1759171789811,
+      "period": "1759171780000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "plugins.metrics-by-endpoint./api/products.errors.ETIMEDOUT": 43,
+        "errors.ETIMEDOUT": 43,
+        "vusers.failed": 43
+      },
+      "rates": {},
+      "firstCounterAt": 1759171790604,
+      "lastCounterAt": 1759171799960,
+      "firstMetricAt": 1759171790604,
+      "lastMetricAt": 1759171799960,
+      "period": "1759171790000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "plugins.metrics-by-endpoint./api/products.errors.ETIMEDOUT": 7,
+        "errors.ETIMEDOUT": 7,
+        "vusers.failed": 7
+      },
+      "rates": {},
+      "firstCounterAt": 1759171800008,
+      "lastCounterAt": 1759171801068,
+      "firstMetricAt": 1759171800008,
+      "lastMetricAt": 1759171801068,
+      "period": "1759171800000",
+      "summaries": {},
+      "histograms": {}
+    }
+  ]
+}

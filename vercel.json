@@ -1,0 +1,12 @@
+{
+  "builds": [
+    { "src": "frontend/**", "use": "@vercel/next" },
+    { "src": "backend/api/[...all].ts", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/backend/(.*)", "dest": "backend/api/[...all].ts" },
+    { "src": "/(.*)", "dest": "frontend/$1" }
+  ]
+}
+
+

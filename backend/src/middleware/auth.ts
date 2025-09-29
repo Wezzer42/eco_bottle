@@ -14,7 +14,7 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
   try {
     const secret = process.env.JWT_SECRET || "dev-secret";
     const payload = jwt.verify(token, secret) as { sub?: string; id?: string; email: string };
-    // Поддерживаем как sub (стандартный JWT), так и id для обратной совместимости
+    // Support both sub (standard JWT) and id for backward compatibility
     const userId = payload.sub || payload.id;
     if (!userId) {
       return res.status(401).json({ error: "Invalid token: missing user ID" });

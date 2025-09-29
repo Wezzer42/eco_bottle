@@ -11,7 +11,7 @@ A production-ready, scalable demo: Next.js 15 + Node/Express + PostgreSQL (Prism
 ### Local Development
 ```bash
 # 1. Clone repository
-git clone https://github.com/your-username/eco_bottle.git
+git clone https://github.com/Wezzer42/eco_bottle.git
 cd eco_bottle
 
 # 2. Setup environment
@@ -470,4 +470,4 @@ This project demonstrates:
 
 **Built with ❤️ for demonstrating modern full-stack development practices.**
 
-For questions, issues, or contributions, please visit our [GitHub repository](https://github.com/your-username/eco_bottle).
+For questions, issues, or contributions, please visit our [GitHub repository](https://github.com/Wezzer42/eco_bottle).

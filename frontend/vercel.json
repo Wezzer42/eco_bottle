@@ -9,7 +9,7 @@
     }
   ],
   "env": {
-    "NEXTAUTH_URL": "$VERCEL_URL",
+    "NEXTAUTH_URL": "https://$VERCEL_URL",
     "NEXTAUTH_SECRET": "@nextauth-secret",
     "NEXT_PUBLIC_API_BASE": "@api-base-url",
     "GOOGLE_CLIENT_ID": "@google-client-id",

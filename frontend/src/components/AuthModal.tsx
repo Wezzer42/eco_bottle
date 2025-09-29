@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-// Удалено - используем относительные пути
+// Removed - using relative paths
 
 type AuthResponse = { token?: string; user?: { id: number; email: string } };
 async function postJSON(path: 'login' | 'signup', data: Record<string, string>): Promise<AuthResponse> {
@@ -45,7 +45,7 @@ export default function AuthModal({ open, onOpenChange, afterAuthHref = "/profil
     setLoading(true);
     try {
       if (tab === "login") {
-        // Используем NextAuth signIn для логина
+        // Use NextAuth signIn for login
         const result = await signIn("credentials", {
           email,
           password,
@@ -58,10 +58,10 @@ export default function AuthModal({ open, onOpenChange, afterAuthHref = "/profil
         
         window.location.href = afterAuthHref;
       } else {
-        // Для регистрации сначала создаем аккаунт через backend
+        // For signup: create account via backend first
         await postJSON("signup", { email, password, name });
         
-        // Затем логинимся через NextAuth
+        // Then log in via NextAuth
         const result = await signIn("credentials", {
           email,
           password,

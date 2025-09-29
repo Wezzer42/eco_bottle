@@ -1,33 +1,6 @@
 version: '3.8'
 
 services:
-  # Основные сервисы из docker-compose.yml
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: eco_bottle
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secret123
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d eco_bottle"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   # Prometheus для сбора метрик
   prometheus:
     image: prom/prometheus:latest
@@ -38,6 +11,8 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml
       - prometheus_data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'

@@ -9,7 +9,7 @@ import { cacheMiddleware, deleteCached } from "../services/cache";
 const prisma = new PrismaClient();
 const r = Router();
 
-// GET /api/me - получить профиль (кешируем на 15 секунд)
+// GET /api/me - get profile (cached for 15 seconds)
 r.get("/", requireAuth, cacheMiddleware(15), async (req, res, next) => {
   try {
     const uid = (req as any).user.sub ?? (req as any).user.id;
@@ -25,7 +25,7 @@ r.get("/", requireAuth, cacheMiddleware(15), async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// PUT /api/me - обновить профиль (имя)
+// PUT /api/me - update profile (name)
 r.put("/", requireAuth, apiLimiter, async (req, res, next) => {
   try {
     const uid = (req as any).user.sub ?? (req as any).user.id;
@@ -38,7 +38,7 @@ r.put("/", requireAuth, apiLimiter, async (req, res, next) => {
       data: { name }
     });
     
-    // Очищаем кеш профиля пользователя
+    // Invalidate user profile cache
     await deleteCached("page:/api/me*");
     
     res.json({ 
@@ -50,7 +50,7 @@ r.put("/", requireAuth, apiLimiter, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// PUT /api/me/password - смена пароля
+// PUT /api/me/password - change password
 r.put("/password", requireAuth, apiLimiter, async (req, res, next) => {
   try {
     const uid = (req as any).user.sub ?? (req as any).user.id;

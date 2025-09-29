@@ -1,46 +1,46 @@
 # GitOps Quick Start Guide
 
-Быстрый запуск GitOps для EcoBottle проекта.
+Quick GitOps setup for the EcoBottle project.
 
-## 🚀 За 5 минут до продакшена
+## 🚀 Five Minutes to Production
 
-### 1. Подготовка (1 мин)
+### 1. Prerequisites (1 min)
 
 ```bash
-# Клонируй репозиторий
+# Clone repository
 git clone https://github.com/your-username/eco_bottle.git
 cd eco_bottle
 
-# Убедись что у тебя есть:
-# - Kubernetes кластер
-# - kubectl настроен
-# - Helm установлен
+# Ensure you have:
+# - Kubernetes cluster
+# - kubectl configured
+# - Helm installed
 ```
 
-### 2. Установи Argo CD (2 мин)
+### 2. Install Argo CD (2 min)
 
 ```bash
-# Быстрая установка
+# Quick install
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-# Получи пароль админа
+# Get admin password
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 
-# Проброс порта для UI (опционально)
+# Port-forward for UI (optional)
 kubectl port-forward svc/argocd-server -n argocd 8080:443 &
 ```
 
-### 3. Деплой приложения (2 мин)
+### 3. Deploy the application (2 min)
 
 ```bash
-# Обнови репозиторий в Application
+# Update repository URL in Application
 sed -i 's/your-username/YOUR_GITHUB_USERNAME/' infra/argocd/api-application.yaml
 
-# Применяй Application
+# Apply Application
 kubectl apply -f infra/argocd/api-application.yaml
 
-# Создай секреты
+# Create secrets
 kubectl create namespace ecobottle
 kubectl create secret generic ecobottle-secrets -n ecobottle \
   --from-literal=DATABASE_URL="postgresql://user:pass@postgres:5432/ecobottle" \
@@ -48,19 +48,19 @@ kubectl create secret generic ecobottle-secrets -n ecobottle \
   --from-literal=REDIS_URL="redis://redis:6379"
 ```
 
-## 🔧 Конфигурация CI/CD
+## 🔧 CI/CD Configuration
 
 ### GitHub Secrets
 
-Добавь в Settings → Secrets and variables → Actions:
+Add to Settings → Secrets and variables → Actions:
 
 ```
-GITOPS_TOKEN = "github_pat_xxxxx"  # Personal Access Token с repo правами
+GITOPS_TOKEN = "github_pat_xxxxx"  # Personal Access Token with repo permissions
 ```
 
 ### Container Registry
 
-В `infra/helm/api/values.yaml` обнови:
+Update `infra/helm/api/values.yaml`:
 
 ```yaml
 image:
@@ -70,8 +70,8 @@ image:
 
 ## 📊 Vercel (Frontend)
 
-1. Подключи репозиторий к Vercel
-2. Добавь переменные окружения:
+1. Connect repository to Vercel
+2. Add environment variables:
 
 ```
 NEXTAUTH_URL=https://your-app.vercel.app
@@ -83,40 +83,40 @@ GOOGLE_CLIENT_SECRET=your-google-oauth-secret
 
 ## 🎯 Workflow
 
-1. **Пуш код** → GitHub
-2. **CI билдит** образы → GitHub Container Registry  
-3. **CI обновляет** теги в `values.yaml`
-4. **Argo CD синхронизирует** → Kubernetes
+1. Push code → GitHub
+2. CI builds images → GitHub Container Registry  
+3. CI updates tags in `values.yaml`
+4. Argo CD syncs → Kubernetes
 
-## 🔍 Мониторинг
+## 🔍 Monitoring
 
 ```bash
-# Статус приложений Argo CD
+# Argo CD applications status
 kubectl get applications -n argocd
 
-# Поды приложения
+# Application pods
 kubectl get pods -n ecobottle
 
-# Логи
+# Logs
 kubectl logs -l app.kubernetes.io/name=ecobottle-api -n ecobottle -f
 
-# Метрики (если Prometheus установлен)
+# Metrics (if Prometheus installed)
 kubectl port-forward svc/prometheus 9090:9090 -n monitoring
 ```
 
-## 🔧 Полезные команды
+## 🔧 Useful commands
 
 ```bash
-# Принудительная синхронизация
+# Force sync
 kubectl patch app ecobottle-api -n argocd --type merge -p '{"operation":{"sync":{"revision":"HEAD"}}}'
 
-# Перезапуск deployment
+# Restart deployment
 kubectl rollout restart deployment/ecobottle-api -n ecobottle
 
-# Масштабирование
+# Scale
 kubectl scale deployment/ecobottle-api --replicas=3 -n ecobottle
 
-# Обновление секретов
+# Update secrets
 kubectl create secret generic ecobottle-secrets -n ecobottle \
   --from-literal=NEW_VAR="new-value" \
   --dry-run=client -o yaml | kubectl apply -f -
@@ -126,38 +126,38 @@ kubectl create secret generic ecobottle-secrets -n ecobottle \
 
 **ImagePullBackOff?**
 ```bash
-# Проверь образ
+# Check image
 docker pull ghcr.io/your-username/eco_bottle/api:latest
 
-# Проверь логи
+# Check logs
 kubectl describe pod -l app.kubernetes.io/name=ecobottle-api -n ecobottle
 ```
 
-**Argo CD не синхронизируется?**
+**Argo CD not syncing?**
 ```bash
-# Проверь статус
+# Check status
 kubectl describe application ecobottle-api -n argocd
 
-# Принудительная синхронизация
+# Force sync
 kubectl patch app ecobottle-api -n argocd --type merge -p '{"operation":{"sync":{"revision":"HEAD"}}}'
 ```
 
-**База данных не подключается?**
+**Database connection issues?**
 ```bash
-# Проверь секреты
+# Check secrets
 kubectl get secret ecobottle-secrets -n ecobottle -o yaml
 
-# Тестовое подключение
+# Test connection
 kubectl run pg-test --rm -it --image=postgres:15 -n ecobottle -- psql $DATABASE_URL
 ```
 
-## 📚 Дополнительно
+## 📚 Additional
 
-- 📖 Полная документация: `infra/README.md`
-- 🔧 Настройка мониторинга: `MONITORING.md`  
-- 🐳 Docker Compose для разработки: `docker-compose.yml`
-- 🔍 CI/CD статус: `CI-CD-STATUS.md`
+- Full docs: `infra/README.md`
+- Monitoring setup: `MONITORING.md`  
+- Docker Compose for development: `docker-compose.yml`
+- CI/CD status: `CI-CD-STATUS.md`
 
 ---
 
-🎉 **Готово!** Теперь у тебя GitOps как в Netflix, только лучше! 🚀
+🎉 Ready! You now have Netflix-grade GitOps (almost 😉).

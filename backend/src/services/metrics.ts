@@ -3,7 +3,7 @@ import client from "prom-client";
 
 export const register = new client.Registry();
 
-// HTTP метрики
+// HTTP metrics
 export const httpDuration = new client.Histogram({
   name: "http_request_duration_ms",
   help: "Duration of HTTP requests in ms",
@@ -22,7 +22,7 @@ export const activeConnections = new client.Gauge({
   help: "Number of active HTTP connections"
 });
 
-// Метрики кеширования
+// Cache metrics
 export const cacheHits = new client.Counter({
   name: "cache_hits_total",
   help: "Total number of cache hits",
@@ -48,7 +48,7 @@ export const cacheSize = new client.Gauge({
   labelNames: ["cache_instance"]
 });
 
-// Метрики базы данных
+// Database metrics
 export const dbConnections = new client.Gauge({
   name: "database_connections_active",
   help: "Number of active database connections"
@@ -67,7 +67,7 @@ export const dbErrors = new client.Counter({
   labelNames: ["operation", "error_type"]
 });
 
-// Бизнес метрики
+// Business metrics
 export const userRegistrations = new client.Counter({
   name: "user_registrations_total",
   help: "Total number of user registrations"
@@ -91,7 +91,7 @@ export const apiErrors = new client.Counter({
   labelNames: ["endpoint", "error_type", "status"]
 });
 
-// Системные метрики
+// System metrics
 export const memoryUsage = new client.Gauge({
   name: "process_memory_usage_bytes",
   help: "Process memory usage in bytes",
@@ -121,10 +121,10 @@ register.registerMetric(apiErrors);
 register.registerMetric(memoryUsage);
 register.registerMetric(cpuUsage);
 
-// Собираем стандартные метрики Node.js
+// Collect default Node.js metrics
 client.collectDefaultMetrics({ register });
 
-// Функция для сбора системных метрик
+// Collect system metrics periodically
 export function collectSystemMetrics() {
   const memStats = process.memoryUsage();
   memoryUsage.set({ type: 'rss' }, memStats.rss);
@@ -132,13 +132,13 @@ export function collectSystemMetrics() {
   memoryUsage.set({ type: 'heapTotal' }, memStats.heapTotal);
   memoryUsage.set({ type: 'external' }, memStats.external);
   
-  // CPU usage (простая реализация)
+  // CPU usage (simple calculation)
   const cpuUsed = process.cpuUsage();
   const cpuPercent = (cpuUsed.user + cpuUsed.system) / 1000000; // микросекунды в секунды
   cpuUsage.set(cpuPercent);
 }
 
-// Middleware для отслеживания HTTP метрик
+// Middleware to instrument HTTP metrics
 export function httpMetricsMiddleware() {
   return (req: any, res: any, next: any) => {
     const start = Date.now();
@@ -160,9 +160,9 @@ export function httpMetricsMiddleware() {
 }
 
 export function registerMetrics() {
-  // Запускаем сбор системных метрик каждые 10 секунд
+  // Start system metrics collection every 10 seconds
   setInterval(collectSystemMetrics, 10000);
-  collectSystemMetrics(); // Сразу собираем первые метрики
+  collectSystemMetrics(); // Collect initial metrics immediately
 }
 
 export function startMetricsServer(port: number) {
