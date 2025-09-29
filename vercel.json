@@ -4,7 +4,10 @@
     { "src": "backend/api/[...all].ts", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/api/backend/(.*)", "dest": "/backend/api/[...all].ts" }
+    { "src": "/api/backend/(.*)", "dest": "backend/api/[...all].ts" },
+    { "src": "/api/(.*)", "dest": "backend/api/[...all].ts" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "frontend/$1" }
   ]
 }
 
