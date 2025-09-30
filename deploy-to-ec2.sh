@@ -5,7 +5,7 @@ set -e
 
 EC2_HOST="ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com"
 EC2_USER="ubuntu"
-KEY_FILE="your-key.pem"  # Update this path
+KEY_FILE="$HOME/.ssh/your-key.pem"  # Update this path to your actual key
 
 echo "🚀 Deploying EcoBottle to EC2 instance: $EC2_HOST"
 
@@ -29,9 +29,29 @@ print_error() {
 
 # Check if key file exists
 if [ ! -f "$KEY_FILE" ]; then
-    print_warning "SSH key file not found. Please update KEY_FILE in this script."
-    echo "Example: KEY_FILE=\"~/.ssh/your-ec2-key.pem\""
+    print_error "SSH key file not found: $KEY_FILE"
+    echo ""
+    echo "📝 How to set up your SSH key:"
+    echo ""
+    echo "1. If you have an existing key:"
+    echo "   - Copy your .pem file to ~/.ssh/"
+    echo "   - chmod 400 ~/.ssh/your-key.pem"
+    echo "   - Update KEY_FILE variable in this script"
+    echo ""
+    echo "2. If you need to create a new key:"
+    echo "   aws ec2 create-key-pair --key-name ecobottle-key --query 'KeyMaterial' --output text > ~/.ssh/ecobottle-key.pem"
+    echo "   chmod 400 ~/.ssh/ecobottle-key.pem"
+    echo ""
+    echo "3. Then update this script:"
+    echo "   KEY_FILE=\"\$HOME/.ssh/ecobottle-key.pem\""
+    echo ""
     exit 1
+fi
+
+# Check key permissions
+if [ "$(stat -c %a "$KEY_FILE")" != "400" ]; then
+    print_warning "SSH key permissions should be 400. Fixing..."
+    chmod 400 "$KEY_FILE"
 fi
 
 print_status "Using AWS RDS PostgreSQL and ElastiCache Redis..."
