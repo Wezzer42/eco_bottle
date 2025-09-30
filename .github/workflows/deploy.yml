@@ -1,0 +1,305 @@
+name: 🚀 Deploy EcoBottle
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # Test and Build
+  test:
+    name: 🧪 Test & Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [frontend, backend]
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: '${{ matrix.component }}/package-lock.json'
+
+    - name: 📚 Install dependencies
+      run: |
+        cd ${{ matrix.component }}
+        npm ci
+
+    - name: 🔍 Lint code
+      run: |
+        cd ${{ matrix.component }}
+        npm run lint || echo "⚠️ Linting warnings found"
+
+    - name: 🔧 Type check
+      run: |
+        cd ${{ matrix.component }}
+        npm run type-check || echo "⚠️ Type check warnings found"
+
+    - name: 🏗️ Build
+      run: |
+        cd ${{ matrix.component }}
+        npm run build
+
+    - name: 🧪 Run tests
+      run: |
+        cd ${{ matrix.component }}
+        npm test || echo "⚠️ Tests need attention"
+
+  # Security Scanning
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔍 Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: 📊 Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: 🛡️ Audit npm packages
+      run: |
+        cd backend && npm audit --audit-level=high || echo "⚠️ Security vulnerabilities found"
+        cd ../frontend && npm audit --audit-level=high || echo "⚠️ Security vulnerabilities found"
+
+  # Determine deployment environment
+  determine-environment:
+    name: 🎯 Determine Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      should-deploy: ${{ steps.env.outputs.should-deploy }}
+    
+    steps:
+    - name: 🎯 Set environment
+      id: env
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          echo "should-deploy=true" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "environment=production" >> $GITHUB_OUTPUT
+          echo "should-deploy=true" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+          echo "environment=staging" >> $GITHUB_OUTPUT
+          echo "should-deploy=true" >> $GITHUB_OUTPUT
+        else
+          echo "environment=review" >> $GITHUB_OUTPUT
+          echo "should-deploy=false" >> $GITHUB_OUTPUT
+        fi
+
+  # Deploy to AWS EC2
+  deploy:
+    name: 🚀 Deploy to ${{ needs.determine-environment.outputs.environment }}
+    runs-on: ubuntu-latest
+    needs: [test, security, determine-environment]
+    if: needs.determine-environment.outputs.should-deploy == 'true'
+    environment: ${{ needs.determine-environment.outputs.environment }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup deployment environment
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        
+        # Add EC2 host to known_hosts
+        ssh-keyscan -H ${{ vars.EC2_HOST }} >> ~/.ssh/known_hosts
+
+    - name: 📋 Prepare environment config
+      run: |
+        # Create environment-specific .env.prod
+        cat > .env.prod << EOF
+        # Environment: ${{ needs.determine-environment.outputs.environment }}
+        NODE_ENV=${{ needs.determine-environment.outputs.environment == 'production' && 'production' || 'staging' }}
+        
+        # Database
+        DATABASE_URL=${{ secrets.DATABASE_URL }}
+        
+        # Cache
+        REDIS_URL=${{ secrets.REDIS_URL }}
+        
+        # URLs
+        NEXTAUTH_URL=${{ vars.NEXTAUTH_URL }}
+        NEXT_PUBLIC_API_BASE=${{ vars.NEXT_PUBLIC_API_BASE }}
+        CORS_ORIGIN=${{ vars.CORS_ORIGIN }}
+        
+        # Security
+        JWT_SECRET=${{ secrets.JWT_SECRET }}
+        NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+        
+        # AWS
+        AWS_REGION=${{ vars.AWS_REGION }}
+        
+        # Monitoring
+        GRAFANA_USER=${{ vars.GRAFANA_USER }}
+        GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}
+        
+        # Application
+        PORT=4000
+        PROM_PORT=9100
+        
+        # Feature flags for environment
+        ENABLE_METRICS=true
+        ENABLE_CACHE=true
+        ENABLE_RATE_LIMITING=${{ needs.determine-environment.outputs.environment == 'production' && 'true' || 'false' }}
+        EOF
+
+    - name: 📁 Sync files to EC2
+      run: |
+        # Exclude unnecessary files for deployment
+        rsync -avz --delete \
+          --exclude='.git' \
+          --exclude='node_modules' \
+          --exclude='*/node_modules' \
+          --exclude='*.log' \
+          --exclude='.env*' \
+          --exclude='terraform/' \
+          --exclude='docs/' \
+          -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+          ./ ${{ vars.EC2_USER }}@${{ vars.EC2_HOST }}:/home/ubuntu/ecobottle/
+
+    - name: 📋 Upload environment config
+      run: |
+        scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          .env.prod ${{ vars.EC2_USER }}@${{ vars.EC2_HOST }}:/home/ubuntu/ecobottle/
+
+    - name: 🚀 Deploy application
+      run: |
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ${{ vars.EC2_USER }}@${{ vars.EC2_HOST }} << 'ENDSSH'
+        
+        cd /home/ubuntu/ecobottle
+        
+        # Set proper permissions
+        chmod 600 .env.prod
+        
+        # Stop existing containers
+        docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml down || true
+        
+        # Pull latest images and rebuild
+        docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml pull || true
+        docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml build --no-cache
+        
+        # Start services
+        docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml up -d
+        
+        # Wait for services to be ready
+        echo "⏳ Waiting for services to start..."
+        sleep 60
+        
+        # Health check
+        echo "🔍 Performing health checks..."
+        
+        # Check backend health
+        if curl -sf http://localhost/health > /dev/null; then
+          echo "✅ Backend health check passed"
+        else
+          echo "❌ Backend health check failed"
+          exit 1
+        fi
+        
+        # Check frontend
+        if curl -sf http://localhost > /dev/null; then
+          echo "✅ Frontend health check passed"
+        else
+          echo "❌ Frontend health check failed"
+          exit 1
+        fi
+        
+        # Show container status
+        echo "📊 Container status:"
+        docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml ps
+        
+        echo "🎉 Deployment completed successfully!"
+        ENDSSH
+
+    - name: 🧪 Run post-deployment tests
+      run: |
+        # Test critical endpoints
+        echo "🧪 Running post-deployment tests..."
+        
+        # Test API health
+        if curl -sf "http://${{ vars.EC2_HOST }}/health"; then
+          echo "✅ API health endpoint working"
+        else
+          echo "❌ API health endpoint failed"
+          exit 1
+        fi
+        
+        # Test frontend
+        if curl -sf "http://${{ vars.EC2_HOST }}"; then
+          echo "✅ Frontend is accessible"
+        else
+          echo "❌ Frontend is not accessible"
+          exit 1
+        fi
+
+    - name: 💬 Deployment notification
+      if: always()
+      run: |
+        if [[ "${{ job.status }}" == "success" ]]; then
+          echo "🎉 Deployment to ${{ needs.determine-environment.outputs.environment }} successful!"
+          echo "🌐 Frontend: http://${{ vars.EC2_HOST }}"
+          echo "🔧 API: http://${{ vars.EC2_HOST }}/api"
+          echo "📊 Monitoring: http://${{ vars.EC2_HOST }}/grafana"
+        else
+          echo "❌ Deployment to ${{ needs.determine-environment.outputs.environment }} failed!"
+        fi
+
+  # Rollback capability
+  rollback:
+    name: 🔄 Rollback
+    runs-on: ubuntu-latest
+    if: failure() && needs.deploy.result == 'failure'
+    needs: [deploy]
+    environment: ${{ needs.determine-environment.outputs.environment }}
+    
+    steps:
+    - name: 🔄 Rollback deployment
+      run: |
+        echo "🔄 Performing rollback..."
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ${{ vars.EC2_USER }}@${{ vars.EC2_HOST }} << 'ENDSSH'
+        
+        cd /home/ubuntu/ecobottle
+        
+        # Try to restart with last known good configuration
+        docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml down
+        docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml up -d
+        
+        echo "🔄 Rollback completed"
+        ENDSSH

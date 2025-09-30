@@ -1,0 +1,200 @@
+name: 🌍 Environment Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+        - development
+        - staging  
+        - production
+      
+      force_rebuild:
+        description: 'Force rebuild Docker images'
+        required: false
+        type: boolean
+        default: false
+      
+      run_migrations:
+        description: 'Run database migrations'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  deploy-environment:
+    name: 🚀 Deploy to ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ vars.EC2_HOST }} >> ~/.ssh/known_hosts
+
+    - name: 📋 Create environment configuration
+      run: |
+        case "${{ github.event.inputs.environment }}" in
+          "production")
+            cat > .env.prod << EOF
+            NODE_ENV=production
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            REDIS_URL=${{ secrets.REDIS_URL }}
+            NEXTAUTH_URL=${{ vars.NEXTAUTH_URL }}
+            NEXT_PUBLIC_API_BASE=${{ vars.NEXT_PUBLIC_API_BASE }}
+            CORS_ORIGIN=${{ vars.CORS_ORIGIN }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+            AWS_REGION=${{ vars.AWS_REGION }}
+            GRAFANA_USER=${{ vars.GRAFANA_USER }}
+            GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}
+            PORT=4000
+            PROM_PORT=9100
+            ENABLE_METRICS=true
+            ENABLE_CACHE=true
+            ENABLE_RATE_LIMITING=true
+            LOG_LEVEL=info
+            MAX_CONNECTIONS=100
+            BACKUP_ENABLED=true
+            EOF
+            ;;
+          "staging")
+            cat > .env.prod << EOF
+            NODE_ENV=staging
+            DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}
+            REDIS_URL=${{ secrets.STAGING_REDIS_URL }}
+            NEXTAUTH_URL=${{ vars.STAGING_NEXTAUTH_URL }}
+            NEXT_PUBLIC_API_BASE=${{ vars.STAGING_NEXT_PUBLIC_API_BASE }}
+            CORS_ORIGIN=${{ vars.STAGING_CORS_ORIGIN }}
+            JWT_SECRET=${{ secrets.STAGING_JWT_SECRET }}
+            NEXTAUTH_SECRET=${{ secrets.STAGING_NEXTAUTH_SECRET }}
+            AWS_REGION=${{ vars.AWS_REGION }}
+            GRAFANA_USER=admin
+            GRAFANA_PASSWORD=${{ secrets.STAGING_GRAFANA_PASSWORD }}
+            PORT=4000
+            PROM_PORT=9100
+            ENABLE_METRICS=true
+            ENABLE_CACHE=true
+            ENABLE_RATE_LIMITING=false
+            LOG_LEVEL=debug
+            MAX_CONNECTIONS=50
+            BACKUP_ENABLED=false
+            EOF
+            ;;
+          "development")
+            cat > .env.prod << EOF
+            NODE_ENV=development
+            DATABASE_URL=postgresql://ecobottle:password@postgres:5432/ecobottle
+            REDIS_URL=redis://redis:6379
+            NEXTAUTH_URL=http://localhost:3000
+            NEXT_PUBLIC_API_BASE=http://localhost:3000/api
+            CORS_ORIGIN=http://localhost:3000
+            JWT_SECRET=dev_jwt_secret_not_for_production
+            NEXTAUTH_SECRET=dev_nextauth_secret
+            GRAFANA_USER=admin
+            GRAFANA_PASSWORD=admin
+            PORT=4000
+            PROM_PORT=9100
+            ENABLE_METRICS=true
+            ENABLE_CACHE=true
+            ENABLE_RATE_LIMITING=false
+            LOG_LEVEL=debug
+            MAX_CONNECTIONS=10
+            BACKUP_ENABLED=false
+            EOF
+            ;;
+        esac
+
+    - name: 📁 Deploy to server
+      run: |
+        # Upload files
+        rsync -avz --delete \
+          --exclude='.git' \
+          --exclude='node_modules' \
+          --exclude='*/node_modules' \
+          --exclude='*.log' \
+          --exclude='.env*' \
+          --exclude='terraform/' \
+          -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+          ./ ${{ vars.EC2_USER }}@${{ vars.EC2_HOST }}:/home/ubuntu/ecobottle/
+
+        # Upload environment config
+        scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          .env.prod ${{ vars.EC2_USER }}@${{ vars.EC2_HOST }}:/home/ubuntu/ecobottle/
+
+    - name: 🔄 Run database migrations
+      if: github.event.inputs.run_migrations == 'true'
+      run: |
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ${{ vars.EC2_USER }}@${{ vars.EC2_HOST }} << 'ENDSSH'
+        
+        cd /home/ubuntu/ecobottle/backend
+        
+        # Load environment
+        set -a
+        source ../.env.prod
+        set +a
+        
+        # Run migrations
+        echo "🔄 Running database migrations..."
+        npx prisma migrate deploy
+        
+        echo "✅ Migrations completed"
+        ENDSSH
+
+    - name: 🚀 Deploy application
+      run: |
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ${{ vars.EC2_USER }}@${{ vars.EC2_HOST }} << ENDSSH
+        
+        cd /home/ubuntu/ecobottle
+        
+        # Stop services
+        docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml down || true
+        
+        # Force rebuild if requested
+        if [[ "${{ github.event.inputs.force_rebuild }}" == "true" ]]; then
+          echo "🏗️ Force rebuilding Docker images..."
+          docker system prune -f
+          docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml build --no-cache
+        else
+          docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml build
+        fi
+        
+        # Start services
+        docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml up -d
+        
+        # Wait and health check
+        sleep 45
+        
+        if curl -sf http://localhost/health > /dev/null; then
+          echo "✅ ${{ github.event.inputs.environment }} deployment successful!"
+        else
+          echo "❌ ${{ github.event.inputs.environment }} deployment failed!"
+          exit 1
+        fi
+        ENDSSH
+
+    - name: 📊 Post-deployment report
+      run: |
+        echo "## 🎉 Deployment Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Timestamp:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Force Rebuild:** ${{ github.event.inputs.force_rebuild }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Run Migrations:** ${{ github.event.inputs.run_migrations }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Application URLs" >> $GITHUB_STEP_SUMMARY
+        echo "- **Frontend:** http://${{ vars.EC2_HOST }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **API:** http://${{ vars.EC2_HOST }}/api" >> $GITHUB_STEP_SUMMARY
+        echo "- **Health:** http://${{ vars.EC2_HOST }}/health" >> $GITHUB_STEP_SUMMARY
+        echo "- **Grafana:** http://${{ vars.EC2_HOST }}/grafana" >> $GITHUB_STEP_SUMMARY
