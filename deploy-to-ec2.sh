@@ -12,6 +12,7 @@ echo "🚀 Deploying EcoBottle to EC2 instance: $EC2_HOST"
 # Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 print_status() {
@@ -22,12 +23,20 @@ print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
 # Check if key file exists
 if [ ! -f "$KEY_FILE" ]; then
     print_warning "SSH key file not found. Please update KEY_FILE in this script."
     echo "Example: KEY_FILE=\"~/.ssh/your-ec2-key.pem\""
     exit 1
 fi
+
+# Set RDS password
+RDS_PASSWORD="Touhou13"
+print_status "Using AWS RDS PostgreSQL and ElastiCache Redis..."
 
 print_status "Setting up EC2 instance dependencies..."
 
@@ -83,25 +92,18 @@ rsync -avz -e "ssh -i $KEY_FILE" \
 print_status "Setting up application on EC2..."
 
 # Setup application on EC2
-ssh -i "$KEY_FILE" "$EC2_USER@$EC2_HOST" << 'ENDSSH'
+ssh -i "$KEY_FILE" "$EC2_USER@$EC2_HOST" << ENDSSH
 cd /home/ubuntu/ecobottle
 
-# Create production environment file
-cat > .env.prod << 'EOF'
-# Database (using containerized PostgreSQL for now)
-POSTGRES_DB=ecobottle
-POSTGRES_USER=ecobottle
-POSTGRES_PASSWORD=secure_password_123
-DATABASE_URL=postgresql://ecobottle:secure_password_123@postgres:5432/ecobottle
+# Create production environment file with AWS services
+cat > .env.prod << EOF
+# AWS RDS PostgreSQL
+DATABASE_URL=postgresql://ecobottle:$RDS_PASSWORD@ecobottle.c5a0ccyi8zva.ap-northeast-2.rds.amazonaws.com:5432/ecobottle
 
-# Redis (using containerized Redis for now)  
-REDIS_URL=redis://redis:6379
+# AWS ElastiCache Serverless Redis
+REDIS_URL=rediss://ecobottle.cache.amazonaws.com:6379
 
-# Security
-JWT_SECRET=your_jwt_secret_64_characters_minimum_for_production_security_replace_this
-NEXTAUTH_SECRET=your_nextauth_secret_32_characters_minimum_secure_replace
-
-# URLs (replace with your domain or use IP)
+# URLs
 NEXTAUTH_URL=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
 NEXT_PUBLIC_API_BASE=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com/api
 CORS_ORIGIN=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
@@ -111,9 +113,16 @@ NODE_ENV=production
 PORT=4000
 PROM_PORT=9100
 
+# AWS Region
+AWS_REGION=ap-northeast-2
+
 # Monitoring
 GRAFANA_USER=admin
 GRAFANA_PASSWORD=admin123
+
+# Security (will be generated below)
+JWT_SECRET=placeholder
+NEXTAUTH_SECRET=placeholder
 EOF
 
 # Generate secure secrets
@@ -133,11 +142,11 @@ echo "NEXTAUTH_SECRET: $NEXTAUTH_SECRET"
 chmod 600 .env.prod
 
 # Stop any existing containers
-docker-compose -f docker-compose.simple.yml down || true
+docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml down || true
 
-# Build and start services
-echo "Building and starting services..."
-docker-compose -f docker-compose.simple.yml up --build -d
+# Build and start services with AWS overrides
+echo "Building and starting services with AWS ElastiCache..."
+docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml up --build -d
 
 # Wait for services to start
 echo "Waiting for services to start..."
@@ -145,11 +154,11 @@ sleep 45
 
 # Check service health
 echo "Checking service health..."
-docker-compose -f docker-compose.simple.yml ps
+docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml ps
 
 # Show logs
 echo "Recent logs:"
-docker-compose -f docker-compose.simple.yml logs --tail=10
+docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml logs --tail=10
 
 echo "🎉 Deployment completed!"
 ENDSSH
@@ -191,7 +200,7 @@ echo ""
 echo "🔧 To manage the application:"
 echo "  ssh -i $KEY_FILE $EC2_USER@$EC2_HOST"
 echo "  cd /home/ubuntu/ecobottle"
-echo "  docker-compose -f docker-compose.simple.yml logs -f"
+echo "  docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml logs -f"
 
 # Cleanup
 cd /

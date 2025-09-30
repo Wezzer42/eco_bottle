@@ -1,0 +1,26 @@
+version: '3.8'
+
+# AWS-specific override for using managed services
+services:
+  # Backend with AWS services (all config from .env.prod)
+  backend:
+    # Remove dependency on local postgres/redis since we're using AWS
+    depends_on: []
+
+  # Remove local Redis container since we're using AWS ElastiCache
+  redis:
+    image: alpine:latest
+    command: echo "Using AWS ElastiCache Serverless Redis"
+    restart: "no"
+
+  # Remove local PostgreSQL container since we're using AWS RDS
+  postgres:
+    image: alpine:latest
+    command: echo "Using AWS RDS PostgreSQL"
+    restart: "no"
+    
+  # Frontend (all config from .env.prod)
+  frontend:
+
+  nginx:
+    # No changes needed
