@@ -37,20 +37,16 @@ if ! command -v psql &> /dev/null; then
     exit 1
 fi
 
-# Get RDS password
+# Set RDS password
+RDS_PASSWORD="Touhou13"
+
 echo "RDS Configuration:"
 echo "  Endpoint: $RDS_ENDPOINT"
 echo "  Port: $RDS_PORT"
 echo "  Database: $RDS_DB"
 echo "  Username: $RDS_USER"
+echo "  Password: ******* (from config)"
 echo ""
-read -s -p "Enter RDS password for user '$RDS_USER': " RDS_PASSWORD
-echo ""
-
-if [ -z "$RDS_PASSWORD" ]; then
-    print_error "RDS password is required!"
-    exit 1
-fi
 
 # Test connection
 print_status "Testing RDS connection..."

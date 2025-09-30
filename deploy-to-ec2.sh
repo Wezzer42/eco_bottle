@@ -34,8 +34,6 @@ if [ ! -f "$KEY_FILE" ]; then
     exit 1
 fi
 
-# Set RDS password
-RDS_PASSWORD="Touhou13"
 print_status "Using AWS RDS PostgreSQL and ElastiCache Redis..."
 
 print_status "Setting up EC2 instance dependencies..."
@@ -96,9 +94,10 @@ ssh -i "$KEY_FILE" "$EC2_USER@$EC2_HOST" << ENDSSH
 cd /home/ubuntu/ecobottle
 
 # Create production environment file with AWS services
-cat > .env.prod << EOF
+cat > .env.prod << 'EOF'
 # AWS RDS PostgreSQL
-DATABASE_URL=postgresql://ecobottle:$RDS_PASSWORD@ecobottle.c5a0ccyi8zva.ap-northeast-2.rds.amazonaws.com:5432/ecobottle
+DB_PASSWORD=Touhou13
+DATABASE_URL=postgresql://ecobottle:Touhou13@ecobottle.c5a0ccyi8zva.ap-northeast-2.rds.amazonaws.com:5432/ecobottle
 
 # AWS ElastiCache Serverless Redis
 REDIS_URL=rediss://ecobottle.cache.amazonaws.com:6379
