@@ -209,3 +209,12 @@ test-local.sh
 # Generated documentation
 docs/build/
 docs/dist/
+
+# Environment files
+.env
+.env.local
+.env.prod
+.env.production.local
+.env.staging.local
+.env.development.local
+*.env.backup
