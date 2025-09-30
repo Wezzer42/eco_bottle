@@ -19,6 +19,20 @@ pnpm-debug.log*
 .env.development
 .env.test
 
+# Deployment scripts with secrets
+deploy-to-ec2.sh
+init-rds.sh
+setup-github-secrets.sh
+setup-ssh-key.sh
+
+# SSH keys and certificates
+*.pem
+*.key
+*.ppk
+id_rsa*
+*.crt
+*.csr
+
 # IDE and editor files
 .vscode/
 .idea/
