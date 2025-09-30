@@ -3,7 +3,7 @@
 # Quick deployment to existing EC2 instance
 set -e
 
-EC2_HOST="ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com"
+EC2_HOST="your-production-host.com"
 EC2_USER="ubuntu"
 KEY_FILE="$HOME/.ssh/your-key.pem"  # Update this path to your actual key
 
@@ -116,16 +116,16 @@ cd /home/ubuntu/ecobottle
 # Create production environment file with AWS services
 cat > .env.prod << 'EOF'
 # AWS RDS PostgreSQL
-DB_PASSWORD=Touhou13
-DATABASE_URL=postgresql://ecobottle:Touhou13@ecobottle.c5a0ccyi8zva.ap-northeast-2.rds.amazonaws.com:5432/ecobottle
+DB_PASSWORD=your_secure_password
+DATABASE_URL=postgresql://username:password@your-rds-endpoint:5432/database
 
 # AWS ElastiCache Serverless Redis
-REDIS_URL=rediss://ecobottle.cache.amazonaws.com:6379
+REDIS_URL=rediss://your-elasticache-endpoint:6379
 
 # URLs
-NEXTAUTH_URL=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
-NEXT_PUBLIC_API_BASE=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com/api
-CORS_ORIGIN=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
+NEXTAUTH_URL=http://your-production-host.com
+NEXT_PUBLIC_API_BASE=http://your-production-host.com/api
+CORS_ORIGIN=http://your-production-host.com
 
 # Environment
 NODE_ENV=production

@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - AWS CLI configured
-- Your EC2 instance: `ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com`
+- Your EC2 instance: `your-production-host.com`
 - AWS RDS and ElastiCache already set up
 
 ## Option 1: Quick Deploy (if you have SSH key)
@@ -58,11 +58,11 @@ KEY_FILE="$HOME/.ssh/your-actual-key-name.pem"
 
 After deployment:
 
-- **Frontend**: http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
-- **API**: http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com/api
-- **Health**: http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com/health
-- **Grafana**: http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com/grafana
-- **Prometheus**: http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com/prometheus
+- **Frontend**: http://your-production-host.com
+- **API**: http://your-production-host.com/api
+- **Health**: http://your-production-host.com/health
+- **Grafana**: http://your-production-host.com/grafana
+- **Prometheus**: http://your-production-host.com/prometheus
 
 ## Default Credentials
 
@@ -73,7 +73,7 @@ After deployment:
 ### SSH Connection Issues
 ```bash
 # Test SSH connection
-ssh -i ~/.ssh/your-key.pem ubuntu@ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
+ssh -i ~/.ssh/your-key.pem ubuntu@your-production-host.com
 
 # Check security group allows SSH (port 22) from your IP
 aws ec2 describe-security-groups --group-ids sg-your-group-id
@@ -82,7 +82,7 @@ aws ec2 describe-security-groups --group-ids sg-your-group-id
 ### Application Issues
 ```bash
 # SSH to server and check logs
-ssh -i ~/.ssh/your-key.pem ubuntu@ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
+ssh -i ~/.ssh/your-key.pem ubuntu@your-production-host.com
 cd /home/ubuntu/ecobottle
 docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml logs -f
 ```

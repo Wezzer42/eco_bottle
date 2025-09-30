@@ -71,11 +71,11 @@ STAGING_GRAFANA_PASSWORD=StagingPass123!
 
 #### Production
 ```
-EC2_HOST=ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
+EC2_HOST=yourdomain.com
 EC2_USER=ubuntu
-NEXTAUTH_URL=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
-NEXT_PUBLIC_API_BASE=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com/api
-CORS_ORIGIN=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
+NEXTAUTH_URL=http://yourdomain.com
+NEXT_PUBLIC_API_BASE=http://yourdomain.com
+CORS_ORIGIN=http://yourdomain.com
 AWS_REGION=ap-northeast-2
 GRAFANA_USER=admin
 ```
@@ -129,7 +129,7 @@ For each environment (production, staging):
 ssh-keygen -t rsa -b 4096 -C "deployment@ecobottle"
 
 # Add public key to EC2 instance
-ssh-copy-id -i ~/.ssh/id_rsa.pub ubuntu@ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
+ssh-copy-id -i ~/.ssh/id_rsa.pub ubuntu@your-production-host.com
 
 # Copy private key content for GitHub secret
 cat ~/.ssh/id_rsa

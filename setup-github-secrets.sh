@@ -147,8 +147,8 @@ echo "$BACKUP_ENCRYPTION_KEY" | gh secret set BACKUP_ENCRYPTION_KEY --env produc
 
 # Set production variables
 echo ""
-read -p "Enter EC2_HOST for production [ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com]: " PROD_EC2_HOST
-PROD_EC2_HOST=${PROD_EC2_HOST:-ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com}
+read -p "Enter EC2_HOST for production [your-production-host.com]: " PROD_EC2_HOST
+PROD_EC2_HOST=${PROD_EC2_HOST:-your-production-host.com}
 
 gh variable set EC2_HOST --env production --body "$PROD_EC2_HOST"
 gh variable set EC2_USER --env production --body "ubuntu"

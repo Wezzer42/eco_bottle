@@ -54,7 +54,7 @@ EcoBottle uses a comprehensive CI/CD pipeline with GitHub Actions for automated 
 ## Environment Configuration
 
 ### Production
-- **Host:** `ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com`
+- **Host:** `your-production-host.com`
 - **Database:** AWS RDS PostgreSQL
 - **Cache:** AWS ElastiCache Redis
 - **Features:** Full monitoring, rate limiting, backup
@@ -78,7 +78,7 @@ EcoBottle uses a comprehensive CI/CD pipeline with GitHub Actions for automated 
 
 ```bash
 # Ensure you have EC2 SSH access
-ssh ubuntu@ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
+ssh ubuntu@your-production-host.com
 
 # Or run the SSH setup script
 ./setup-ssh-key.sh
@@ -159,7 +159,7 @@ graph LR
 ```bash
 # Check GitHub Actions logs
 # SSH to server and check containers
-ssh ubuntu@your-ec2-host
+ssh ubuntu@your-production-host
 cd /home/ubuntu/ecobottle
 docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml logs
 
@@ -181,7 +181,7 @@ ssh ubuntu@your-ec2-host "ls -la /etc/ecobottle/secrets/"
 
 ```bash
 # Test SSH connection locally
-ssh -i ~/.ssh/your-key.pem ubuntu@your-ec2-host
+ssh -i ~/.ssh/your-key.pem ubuntu@your-production-host
 
 # Check key permissions
 chmod 600 ~/.ssh/your-key.pem
