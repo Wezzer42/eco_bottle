@@ -1,67 +1,31 @@
 config:
-  target: "https://13-125-17-12.sslip.io"
+  target: "https://api.yourdomain.com"
   phases:
-    - duration: 10
-      arrivalRate: 15
-    - duration: 20
-      arrivalRate: 25
-  defaults:
-    headers:
-      content-type: application/json
+    - name: warmup
+      duration: 30
+      arrivalRate: 20
+    - name: ramp
+      duration: 60
+      arrivalRate: 50
+      rampTo: 150
+    - name: steady
+      duration: 120
+      arrivalRate: 150
   http:
-    timeout: 6000
-    followRedirect: true
-    pool: 50
-  processor: "./loadtest/processor.js"   # <<<< ВАЖНО: путь к файлу, а не inline
-
+    timeout: 200
+    headers:
+      X-Loadtest: "eco-bottle"
+  plugins:
+    expect: {}
+  ensure:
+    thresholds:
+      - http.response_time.p95: 200
+      - http.response_time.p99: 400
+      - http.errors: 0
 scenarios:
   - name: products list
     flow:
       - get:
-          url: "/api/backend/products"
-          expect: [{ statusCode: 200 }]
-
-  - name: signup + login + create product
-    flow:
-      - function: "genUser"
-      - post:
-          url: "/api/backend/auth/signup"
-          json:
-            email: "{{ email }}"
-            password: "P@ssw0rd!"
-            name: "Eco User"
-          capture:
-            - json: "$.user.id"
-              as: "userId"
-            - json: "$.id"
-              as: "userIdFallback"
-          expect: [{ statusCode: "200..201" }]
-      - function: "pickUserId"
-
-      - post:
-          url: "/api/backend/auth/login"
-          json:
-            email: "{{ email }}"
-            password: "P@ssw0rd!"
-          capture:
-            - json: "$.token"
-              as: "token"
-            - json: "$.accessToken"
-              as: "tokenFallback"
-          expect: [{ statusCode: 200 }]
-      - function: "pickToken"
-
-      - post:
-          url: "/api/backend/products"
-          headers:
-            authorization: "Bearer {{ token }}"
-          json:
-            name: "EcoBottle {{ $randomString(6) }}"
-            price: 19.99
-          expect: [{ statusCode: 201 }]
-
-  - name: list after create
-    flow:
-      - get:
-          url: "/api/backend/products"
-          expect: [{ statusCode: 200 }]
+          url: "/api/products?limit=12&page=1&sort=popularity"
+          expect:
+            - statusCode: 200

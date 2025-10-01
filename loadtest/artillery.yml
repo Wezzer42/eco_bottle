@@ -12,30 +12,14 @@ config:
     timeout: 6000
     followRedirect: true
     pool: 50
-  processor: |
-    function genUser(ctx, events, done) {
-      const n = Math.floor(100000 + Math.random()*900000);
-      ctx.vars.email = `user_${n}@test.io`;
-      return done();
-    }
-    function pickUserId(ctx, events, done) {
-      ctx.vars.userId = ctx.vars.userId || ctx.vars.userIdFallback;
-      if (!ctx.vars.userId) return done(new Error("No userId in signup response"));
-      return done();
-    }
-    function pickToken(ctx, events, done) {
-      ctx.vars.token = ctx.vars.token || ctx.vars.tokenFallback;
-      if (!ctx.vars.token) return done(new Error("No token in login response"));
-      return done();
-    }
-    module.exports = { genUser, pickUserId, pickToken };
+  processor: "./loadtest/processor.js"   # <<<< ВАЖНО: путь к файлу, а не inline
 
 scenarios:
   - name: products list
     flow:
       - get:
           url: "/api/backend/products"
-          expect: [ { statusCode: 200 } ]
+          expect: [{ statusCode: 200 }]
 
   - name: signup + login + create product
     flow:
@@ -51,7 +35,7 @@ scenarios:
               as: "userId"
             - json: "$.id"
               as: "userIdFallback"
-          expect: [ { statusCode: "200..201" } ]
+          expect: [{ statusCode: "200..201" }]
       - function: "pickUserId"
 
       - post:
@@ -64,7 +48,7 @@ scenarios:
               as: "token"
             - json: "$.accessToken"
               as: "tokenFallback"
-          expect: [ { statusCode: 200 } ]
+          expect: [{ statusCode: 200 }]
       - function: "pickToken"
 
       - post:
@@ -74,10 +58,10 @@ scenarios:
           json:
             name: "EcoBottle {{ $randomString(6) }}"
             price: 19.99
-          expect: [ { statusCode: 201 } ]
+          expect: [{ statusCode: 201 }]
 
   - name: list after create
     flow:
       - get:
           url: "/api/backend/products"
-          expect: [ { statusCode: 200 } ]
+          expect: [{ statusCode: 200 }]
