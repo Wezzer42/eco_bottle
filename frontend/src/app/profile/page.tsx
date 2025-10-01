@@ -21,7 +21,7 @@ export default async function ProfilePage() {
   const apiAccessToken = (session as typeof session & { apiAccessToken?: string }).apiAccessToken;
   let me: UserProfile | null = null;
   if (apiAccessToken) {
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE!;
     const r = await fetch(`${baseUrl}/api/me`, { 
       headers: { Authorization: `Bearer ${apiAccessToken}` }, 
       cache: 'no-store' 

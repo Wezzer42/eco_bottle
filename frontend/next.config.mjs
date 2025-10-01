@@ -4,7 +4,7 @@ const nextConfig = {
   output: 'standalone',
   images: { remotePatterns: [{ protocol: 'https', hostname: '**' }] },
   async rewrites() {
-    const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+    const base = process.env.NEXT_PUBLIC_API_BASE || '';
     return [
       {
         source: '/api/backend/:path*',

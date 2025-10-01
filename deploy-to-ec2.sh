@@ -3,9 +3,9 @@
 # Quick deployment to existing EC2 instance
 set -e
 
-EC2_HOST="your-production-host.com"
-EC2_USER="ubuntu"
-KEY_FILE="$HOME/.ssh/your-key.pem"  # Update this path to your actual key
+EC2_HOST="ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com"
+EC2_USER="ec2-user"
+KEY_FILE="$HOME/ecobottle.pem"
 
 echo "🚀 Deploying EcoBottle to EC2 instance: $EC2_HOST"
 
@@ -61,7 +61,7 @@ print_status "Setting up EC2 instance dependencies..."
 # Install Docker and dependencies on EC2
 ssh -i "$KEY_FILE" "$EC2_USER@$EC2_HOST" << 'ENDSSH'
 # Update system
-sudo apt update && sudo apt upgrade -y
+sudo yum update -y
 
 # Install Docker if not present
 if ! command -v docker &> /dev/null; then
@@ -105,27 +105,27 @@ rsync -avz -e "ssh -i $KEY_FILE" \
     --exclude='node_modules' \
     --exclude='*/node_modules' \
     --exclude='*.log' \
-    ./ "$EC2_USER@$EC2_HOST:/home/ubuntu/ecobottle/"
+    ./ "$EC2_USER@$EC2_HOST:/home/ec2-user/ecobottle/"
 
 print_status "Setting up application on EC2..."
 
 # Setup application on EC2
 ssh -i "$KEY_FILE" "$EC2_USER@$EC2_HOST" << ENDSSH
-cd /home/ubuntu/ecobottle
+cd /home/ec2-user/ecobottle
 
 # Create production environment file with AWS services
 cat > .env.prod << 'EOF'
-# AWS RDS PostgreSQL
-DB_PASSWORD=your_secure_password
-DATABASE_URL=postgresql://username:password@your-rds-endpoint:5432/database
+        # AWS RDS PostgreSQL
+        DB_PASSWORD=Touhou13
+        DATABASE_URL=postgresql://ecobottle:Touhou13@ecobottle.c5a0ccyi8zva.ap-northeast-2.rds.amazonaws.com:5432/ecobottle
+        
+        # AWS ElastiCache Serverless Redis
+        REDIS_URL=rediss://ecobottle.cache.amazonaws.com:6379
 
-# AWS ElastiCache Serverless Redis
-REDIS_URL=rediss://your-elasticache-endpoint:6379
-
-# URLs
-NEXTAUTH_URL=http://your-production-host.com
-NEXT_PUBLIC_API_BASE=http://your-production-host.com/api
-CORS_ORIGIN=http://your-production-host.com
+        # URLs
+        NEXTAUTH_URL=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
+        NEXT_PUBLIC_API_BASE=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com/api
+        CORS_ORIGIN=http://ec2-13-125-17-12.ap-northeast-2.compute.amazonaws.com
 
 # Environment
 NODE_ENV=production
@@ -218,7 +218,7 @@ echo "  4. Change default monitoring passwords"
 echo ""
 echo "🔧 To manage the application:"
 echo "  ssh -i $KEY_FILE $EC2_USER@$EC2_HOST"
-echo "  cd /home/ubuntu/ecobottle"
+echo "  cd /home/ec2-user/ecobottle"
 echo "  docker-compose -f docker-compose.simple.yml -f docker-compose.aws.yml logs -f"
 
 # Cleanup

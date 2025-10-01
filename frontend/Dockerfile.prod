@@ -1,13 +1,16 @@
 # Multi-stage build for production
-FROM node:18-alpine AS base
+FROM node:20-bullseye AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
+# Install deps (including dev) for building
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+# Use install to allow build without a lockfile inside this workspace
+RUN npm config set registry https://registry.npmjs.org/ \
+ && npm config set fetch-retry-maxtimeout 600000 \
+ && npm install --no-audit --no-fund
+
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -22,7 +25,6 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 

@@ -1,7 +1,7 @@
 {
   "name": "ecobottle-backend",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",

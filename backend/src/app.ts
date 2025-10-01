@@ -13,6 +13,9 @@ import { httpMetricsMiddleware, registerMetrics } from "./services/metrics";
 
 const app = express();
 
+// Trust proxy for rate limiting
+app.set('trust proxy', 1);
+
 // Register metrics collection
 registerMetrics();
 

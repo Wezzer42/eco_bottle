@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: eco-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
+      - /var/log/nginx:/var/log/nginx
+      - /etc/letsencrypt/live/13-125-17-12.sslip.io/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
+      - /etc/letsencrypt/live/13-125-17-12.sslip.io/privkey.pem:/etc/nginx/ssl/privkey.pem:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - eco-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    image: 891377337328.dkr.ecr.ap-northeast-2.amazonaws.com/ecobottle-backend:latest
+    env_file:
+      - .env.production
+    environment:
+      - PORT=4000
+    container_name: eco-backend
+    restart: unless-stopped
+    networks:
+      - eco-network
+    expose:
+      - "4000"
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    image: 891377337328.dkr.ecr.ap-northeast-2.amazonaws.com/ecobottle-frontend:latest
+    env_file:
+      - .env.production
+    environment:
+      - PORT=3000
+    container_name: eco-frontend
+    restart: unless-stopped
+    networks:
+      - eco-network
+    expose:
+      - "3000"
+    
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: eco-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+      - '--web.external-url=http://localhost/prometheus'
+      - '--web.route-prefix=/'
+    restart: unless-stopped
+    networks:
+      - eco-network
+
+  # Grafana monitoring
+  grafana:
+    image: grafana/grafana:latest
+    container_name: eco-grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://13-125-17-12.sslip.io/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    restart: unless-stopped
+    networks:
+      - eco-network
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  eco-network:
+    driver: bridge

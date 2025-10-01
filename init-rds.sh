@@ -3,7 +3,7 @@
 # Initialize AWS RDS database for EcoBottle
 set -e
 
-RDS_ENDPOINT="your-rds-endpoint.amazonaws.com"
+RDS_ENDPOINT="ecobottle.c5a0ccyi8zva.ap-northeast-2.rds.amazonaws.com"
 RDS_PORT="5432"
 RDS_DB="ecobottle"
 RDS_USER="ecobottle"
@@ -38,7 +38,7 @@ if ! command -v psql &> /dev/null; then
 fi
 
 # Set RDS password
-RDS_PASSWORD="your_secure_password"
+RDS_PASSWORD="Touhou13"
 
 echo "RDS Configuration:"
 echo "  Endpoint: $RDS_ENDPOINT"

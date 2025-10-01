@@ -9,7 +9,7 @@ export async function apiFetch(input: string, init?: RequestInit) {
   
   // Determine base URL (server-side needs absolute URL)
   const baseUrl = typeof window === 'undefined' 
-    ? (process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000')
+    ? (process.env.NEXT_PUBLIC_API_BASE!)
     : '';
   const url = typeof window === 'undefined' 
     ? `${baseUrl}${input}`
@@ -22,7 +22,7 @@ export async function apiFetch(input: string, init?: RequestInit) {
 
 // Legacy function for compatibility
 export async function fetchProducts() {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE!;
   const r = await fetch(`${baseUrl}/api/products`, { cache: 'no-store' });
   if (!r.ok) return [];
   return r.json();
