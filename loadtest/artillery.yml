@@ -1,6 +1,5 @@
-# artillery.yml
 config:
-  target: "https://<YOUR_HOST>"        # без хвостового /
+  target: "https://13-125-17-12.sslip.io"
   phases:
     - duration: 10
       arrivalRate: 15
@@ -10,41 +9,53 @@ config:
     headers:
       content-type: application/json
   http:
-    timeout: 5000
-    followRedirect: true               # 308 не ломает поток
-    pool: 50                           # реюз коннекций
+    timeout: 6000
+    followRedirect: true
+    pool: 50
+  processor: |
+    function genUser(ctx, events, done) {
+      const n = Math.floor(100000 + Math.random()*900000);
+      ctx.vars.email = `user_${n}@test.io`;
+      return done();
+    }
+    function pickUserId(ctx, events, done) {
+      ctx.vars.userId = ctx.vars.userId || ctx.vars.userIdFallback;
+      if (!ctx.vars.userId) return done(new Error("No userId in signup response"));
+      return done();
+    }
+    function pickToken(ctx, events, done) {
+      ctx.vars.token = ctx.vars.token || ctx.vars.tokenFallback;
+      if (!ctx.vars.token) return done(new Error("No token in login response"));
+      return done();
+    }
+    module.exports = { genUser, pickUserId, pickToken };
 
 scenarios:
   - name: products list
     flow:
       - get:
-          url: "/api/products"         # один слэш
-          expect:
-            - statusCode: 200
+          url: "/api/backend/products"
+          expect: [ { statusCode: 200 } ]
 
   - name: signup + login + create product
     flow:
-      # 1) signup — генерим уникальный email
-      - function: genUser
+      - function: "genUser"
       - post:
-          url: "/api/auth/signup"
+          url: "/api/backend/auth/signup"
           json:
             email: "{{ email }}"
             password: "P@ssw0rd!"
             name: "Eco User"
           capture:
-            # поддержим оба формата: { user: { id } } ИЛИ { id }
             - json: "$.user.id"
               as: "userId"
             - json: "$.id"
               as: "userIdFallback"
-          expect:
-            - statusCode: 200..201
-      - function: pickUserId
+          expect: [ { statusCode: "200..201" } ]
+      - function: "pickUserId"
 
-      # 2) login — ловим токен под разными ключами
       - post:
-          url: "/api/auth/login"
+          url: "/api/backend/auth/login"
           json:
             email: "{{ email }}"
             password: "P@ssw0rd!"
@@ -53,46 +64,20 @@ scenarios:
               as: "token"
             - json: "$.accessToken"
               as: "tokenFallback"
-          expect:
-            - statusCode: 200
-      - function: pickToken
+          expect: [ { statusCode: 200 } ]
+      - function: "pickToken"
 
-      # 3) create product — авторизованно
       - post:
-          url: "/api/products"
+          url: "/api/backend/products"
           headers:
             authorization: "Bearer {{ token }}"
           json:
             name: "EcoBottle {{ $randomString(6) }}"
             price: 19.99
-          expect:
-            - statusCode: 201..201
+          expect: [ { statusCode: 201 } ]
 
-  # можно дублировать список после создания для дым-теста
   - name: list after create
     flow:
       - get:
-          url: "/api/products"
-          expect:
-            - statusCode: 200
-
-processor:
-  functions:
-    genUser: |
-      function userContext(ctx, events, done) {
-        const n = Math.floor(100000 + Math.random()*900000);
-        ctx.vars.email = `user_${n}@test.io`;
-        return done();
-      }
-    pickUserId: |
-      function userContext(ctx, events, done) {
-        ctx.vars.userId = ctx.vars.userId || ctx.vars.userIdFallback;
-        if (!ctx.vars.userId) return done(new Error("No userId in signup response"));
-        return done();
-      }
-    pickToken: |
-      function userContext(ctx, events, done) {
-        ctx.vars.token = ctx.vars.token || ctx.vars.tokenFallback;
-        if (!ctx.vars.token) return done(new Error("No token in login response"));
-        return done();
-      }
+          url: "/api/backend/products"
+          expect: [ { statusCode: 200 } ]
