@@ -12,7 +12,7 @@ config:
     timeout: 6000
     followRedirect: true
     pool: 50
-  processor: "./loadtest/processor.js"   # <<<< ВАЖНО: путь к файлу, а не inline
+  processor: "./processor.js"   # <<<< ВАЖНО: путь к файлу, а не inline
 
 scenarios:
   - name: products list
